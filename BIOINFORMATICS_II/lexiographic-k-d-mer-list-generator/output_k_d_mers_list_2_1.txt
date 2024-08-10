@@ -1,0 +1,1 @@
+(AG|AG) (AG|TG) (CA|CT) (CT|CA) (CT|CT) (GC|GC) (GC|GC) (GC|GC) (TG|TG)
