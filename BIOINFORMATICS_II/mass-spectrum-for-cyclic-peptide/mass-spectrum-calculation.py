@@ -18,7 +18,7 @@ def spectrum_formation_for_cyclic_peptide_function(cyclic_peptide_string: str, c
         A cyclic peptide string for investigation.
     
     cyclic_not_linear : bool
-        Is True for cyclic peptide mass spectrometry and False for linear peptide.
+        Is False for cyclic peptide mass spectrometry and True for linear peptide.
 
     Returns
     -------
