@@ -1,12 +1,14 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Mon Aug  5 19:22:30 2024
+Created on Sun Aug 11 19:58:53 2024
 
 @author: sergiybegun
 """
 
-# generate all possible combinations of cyclic peptide masses
+# compare the experimental and theoretical spectrum and compute the coincidence
+# as a score value
+
 
 def spectrum_formation_for_cyclic_peptide_function(cyclic_peptide_string: str, cyclic_not_linear: bool):
     """
@@ -106,26 +108,77 @@ def spectrum_formation_for_cyclic_peptide_function(cyclic_peptide_string: str, c
     return sorted(list_of_masses)
 
 
+def peptide_score_function(peptide_string: str, experimental_spectrum_input: list):
+    """
+    calculate the score value for a given peptide by comparing
+    the experimental and theoretical spectrum and compute the coincidence
+    as a score value
 
-read_data_from_file = open("input_2_1_1.txt", "r")
+    Parameters
+    ----------
+    peptide_string : str
+        A cyclic peptide string for investigation.
+    experimental_spectrum_input : list
+        The experimental spectrum.
 
-read_strings_from_file = read_data_from_file.read()
+    Returns
+    -------
+    A score value for a given peptide.
 
-input_peptide_string = str(read_strings_from_file).strip()
+    """
+    
+    peptide_score_value = 0
+    
+    theoretical_spectrum = sorted(spectrum_formation_for_cyclic_peptide_function(peptide_string,False))
+    
+    print("theoretical_spectrum = ", theoretical_spectrum)
+    length_of_theoretical_spectrum = len(theoretical_spectrum)
+    
+    length_of_experimental_spectrum = len(experimental_spectrum_input)
+    
+    print("length_of_theoretical_spectrum = ", length_of_theoretical_spectrum)
+    print("length_of_experimental_spectrum = ", length_of_experimental_spectrum)
+    
+    print("experimental_spectrum_input", experimental_spectrum_input)
+    
+    already_included = []
+    
+    for i in range(0,length_of_experimental_spectrum):
+        current_experimental_spectrum_element = experimental_spectrum_input[i]
+        current_multiplicity = min(theoretical_spectrum.count(current_experimental_spectrum_element),experimental_spectrum_input.count(current_experimental_spectrum_element))
+        if (current_experimental_spectrum_element in theoretical_spectrum) and (current_experimental_spectrum_element not in already_included):
+            if current_experimental_spectrum_element < 200:
+                print("current_multiplicity = ", current_multiplicity, "for the element ", current_experimental_spectrum_element)
+            peptide_score_value += (1 * current_multiplicity)
+            already_included.append(current_experimental_spectrum_element)
+                
+    return peptide_score_value
+
+read_data_from_file = open("dataset_30244_3.txt", "r")
+
+read_strings_from_file = read_data_from_file.readlines()
+
+input_peptide_string = str(read_strings_from_file[0]).strip()
+
+experimental_spectrum_from_file = []
+
+for exp_spectrum_el in str(read_strings_from_file[1]).split():
+    experimental_spectrum_from_file.append(int(str(exp_spectrum_el).strip()))
+
+experimental_spectrum_from_file = sorted(experimental_spectrum_from_file)
 
 print("input_peptide_string = ", input_peptide_string)
 
-list_of_masses_output = spectrum_formation_for_cyclic_peptide_function(input_peptide_string,False)
+#print("experimental_spectrum_from_file = ", experimental_spectrum_from_file)
 
-print("list_of_masses_output = ", list_of_masses_output)
-print("len(list_of_masses_output) = ", len(list_of_masses_output))
+peptide_score = peptide_score_function(input_peptide_string,experimental_spectrum_from_file)
 
-output_file = open("output_list_of_masses.txt", "w")
+print("peptide_score = ", peptide_score)
 
-output_file.write((str(list_of_masses_output).replace("\"", "").replace("\'","").replace("\"", "").replace("\'","").replace(",","").replace("[", "").replace("]", "") + "\n"))
+output_file = open("output_peptide_score.txt", "w")
+
+output_file.write(str(peptide_score).replace("\"", "").replace("\'","").replace("\"", "").replace("\'","").replace(",","").replace("[", "").replace("]", ""))
 
 output_file.close()
 
 read_data_from_file.close()
-
-
