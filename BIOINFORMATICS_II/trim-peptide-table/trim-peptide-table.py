@@ -1,13 +1,63 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Sun Aug 11 19:58:53 2024
+Created on Mon Aug 12 22:56:12 2024
 
 @author: sergiybegun
 """
 
 # compare the experimental and theoretical spectrum and compute the coincidence
 # as a score value
+# select the N top candidates with the highest score
+
+def trim_peptide_score_table(list_of_peptide_candidates: list, spectrum_input: list, N_cut: int):
+    """
+    Cut the end of sorted list.
+
+    Parameters
+    ----------
+    list_of_peptide_candidates : list
+        List of peptides to analyze.
+    spectrum_input : list
+        An experimental spectrum.
+    N_cut : int
+        A number of top candidates to stay in the list.
+
+    Returns
+    -------
+    A list of candidates remained.
+
+    """
+    
+    peptide_score_table = []
+    
+    length_of_peptide_list = len(list_of_peptide_candidates)
+    
+    for i in range(0,length_of_peptide_list):
+        current_peptide = list_of_peptide_candidates[i]
+        current_peptide_score = peptide_score_function(current_peptide,spectrum_input)
+        peptide_score_table.append((current_peptide_score,current_peptide))
+
+    print("peptide_score_table before = ", sorted(peptide_score_table,reverse=True))
+
+    peptide_score_table = sorted(peptide_score_table,reverse=True)
+    
+    print("peptide_score_table after = ", peptide_score_table)
+    
+    list_of_top_peptides = []
+    n_count = 0
+    list_filled = False
+    for i in range(len(peptide_score_table)):
+        current_peptide_score = peptide_score_table[i][0]
+        if (list_filled == False):
+            list_of_top_peptides.append(str(peptide_score_table[i][1]))
+            n_count += 1
+            next_peptide_score = peptide_score_table[i + 1][0]
+            if (n_count >= N_cut) and (next_peptide_score < current_peptide_score):
+                list_filled = True
+                break
+    
+    return list_of_top_peptides
 
 
 def spectrum_formation_for_cyclic_peptide_function(cyclic_peptide_string: str, cyclic_not_linear: bool):
@@ -154,11 +204,15 @@ def peptide_score_function(peptide_string: str, experimental_spectrum_input: lis
                 
     return peptide_score_value
 
-read_data_from_file = open("dataset_30249_1.txt", "r")
+read_data_from_file = open("dataset_30249_3.txt", "r")
 
 read_strings_from_file = read_data_from_file.readlines()
 
-input_peptide_string = str(read_strings_from_file[0]).strip()
+input_peptide_strings = str(read_strings_from_file[0]).split()
+
+list_of_peptide_input = []
+for i in range(0,len(input_peptide_strings)):
+    list_of_peptide_input.append(str(input_peptide_strings[i]).strip())
 
 experimental_spectrum_from_file = []
 
@@ -167,17 +221,19 @@ for exp_spectrum_el in str(read_strings_from_file[1]).split():
 
 experimental_spectrum_from_file = sorted(experimental_spectrum_from_file)
 
-print("input_peptide_string = ", input_peptide_string)
+print("input_peptide_strings = ", input_peptide_strings)
 
-#print("experimental_spectrum_from_file = ", experimental_spectrum_from_file)
+print("experimental_spectrum_from_file = ", experimental_spectrum_from_file)
 
-peptide_score = peptide_score_function(input_peptide_string,experimental_spectrum_from_file)
+n_input_cutting = int(str(read_strings_from_file[2]).strip())
 
-print("peptide_score = ", peptide_score)
+list_of_remainder = trim_peptide_score_table(list_of_peptide_input, experimental_spectrum_from_file, n_input_cutting)
 
-output_file = open("output_peptide_score.txt", "w")
+print("list_of_remainder = ", list_of_remainder)
 
-output_file.write(str(peptide_score).replace("\"", "").replace("\'","").replace("\"", "").replace("\'","").replace(",","").replace("[", "").replace("]", ""))
+output_file = open("output_list_of_remainder.txt", "w")
+
+output_file.write(str(list_of_remainder).replace("\"", "").replace("\'","").replace("\"", "").replace("\'","").replace(",","").replace("[", "").replace("]", ""))
 
 output_file.close()
 
