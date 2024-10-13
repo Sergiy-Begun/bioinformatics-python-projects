@@ -386,7 +386,7 @@ def error_compensation_for_spectrum_convolution_based(allowed_dictionary : list,
     
     print("max_i = ", max_i)
     
-    for i in range((current_i - 1),max_i):
+    for i in range((current_i - 1),(current_i + 2)):
         last = i
         if len(candidate_spectrum[(i - 1)]) == 0:
             print("I was near last")
@@ -596,15 +596,15 @@ def combined_convolution_spectrum_reconstruction_function(most_frequent_max: int
         
         cur_score = top_peptide[i_count][0]
     
-    #print("top_peptide = ", top_peptide)
+    print("top_peptide = ", top_peptide)
     
     #print("top_peptide[0][1] = ", top_peptide[0][1])
     
     print("output_top = ", output_top)
     
-    return output_top
+    return top_peptide
 
-read_data_from_file = open("dataset_30246_7.txt", "r")
+read_data_from_file = open("dataset_30246_8.txt", "r")
 
 read_strings_from_file = read_data_from_file.readlines()
 
@@ -628,13 +628,14 @@ output_file = open("output_top_candidate.txt", "w")
 
 for cur_top_candidate in top_candidate:
     
-    cur_top_candidate_score = cur_top_candidate[0]
+    #cur_top_candidate_score = cur_top_candidate[0]
     
-    output_file.write(str(cur_top_candidate_score) + "\n")
+    #output_file.write(str(cur_top_candidate_score) + "\n")
 
     cur_top_candidate_peptide = str(cur_top_candidate[1]).replace(", ","-").replace("(","").replace(")", "")
     
-    output_file.write(str(cur_top_candidate_peptide).replace("\"", "").replace("\'","").replace("\"", "").replace("\'","").replace(",","").replace("[", "").replace("]", "") + "\n")
+    #output_file.write(str(cur_top_candidate_peptide).replace("\"", "").replace("\'","").replace("\"", "").replace("\'","").replace(",","").replace("[", "").replace("]", "") + "\n")
+    output_file.write(str(cur_top_candidate_peptide).replace("\"", "").replace("\'","").replace("\"", "").replace("\'","").replace(",","").replace("[", "").replace("]", "") + " ")
 
 output_file.close()
 
