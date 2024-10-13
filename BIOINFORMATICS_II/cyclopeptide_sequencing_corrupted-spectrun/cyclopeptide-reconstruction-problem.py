@@ -275,25 +275,24 @@ def spectrum_formation_for_cyclic_peptide_function(cyclic_peptide_string, cyclic
                             dictionary_of_masses[current_repetitive_variant] = mass_of_current_element
                                 
             else:
-                current_peptide_string_equivalent = str(current_peptide_variant).replace("\"", "").replace("\'","").replace("\"", "").replace("\'","").replace(",","-").replace("[", "").replace("]", "")
 
                 for j in range(0,(length_of_cyclic_peptide - i + 1)):
                     
                     current_element_for_mass_determination = current_peptide_variant[j:(j + i)]
-                    
-                    current_element_for_mass_determination_string_equivalent = str(current_element_for_mass_determination).replace("\"", "").replace("\'","").replace("\"", "").replace("\'","").replace(",","-").replace("[", "").replace("]", "")
     
-                    count_repetitive_fragments = current_peptide_string_equivalent.count(current_element_for_mass_determination_string_equivalent)
+                    count_repetitive_fragments = (str(current_peptide_variant).replace(")", "").replace("(", "").replace(",", "")).count((str(current_element_for_mass_determination)).replace(")", "").replace("(", "").replace(",", ""))
+                    print("count_repetitive_fragments = ", count_repetitive_fragments)
     
                     mass_of_current_element = 0
                     for t in range(0,len(current_element_for_mass_determination)):
                         mass_of_current_element += current_element_for_mass_determination[t]
                                     
                     for repetitive_i in range(0,count_repetitive_fragments):
-                        current_repetitive_variant_string_equivalent = current_element_for_mass_determination_string_equivalent + str(repetitive_i)
+                        current_repetitive_variant = str(current_element_for_mass_determination) + str(repetitive_i)
+                        print("current_repetitive_variant = ", current_repetitive_variant)
     
-                        if (current_repetitive_variant_string_equivalent not in dictionary_of_masses.keys()):
-                            dictionary_of_masses[current_repetitive_variant_string_equivalent] = mass_of_current_element
+                        if (current_repetitive_variant not in dictionary_of_masses.keys()):
+                            dictionary_of_masses[current_repetitive_variant] = mass_of_current_element
                         
         i += 1
     

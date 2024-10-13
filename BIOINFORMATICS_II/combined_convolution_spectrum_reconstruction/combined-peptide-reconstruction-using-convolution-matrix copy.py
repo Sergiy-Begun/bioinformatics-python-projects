@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Sat Oct 12 08:49:20 2024
+Created on Sat Oct 12 21:33:12 2024
 
 @author: sergiybegun
 """
@@ -12,12 +12,15 @@ import time
 
 t1 = time.time()
 
-def peptide_reconstruction_from_spectrum(spectrum: list):
+
+def peptide_reconstruction_from_spectrum(allowed_dictionary: list, spectrum: list):
     """
     reconstruct cyclic peptide by mass spectrum
 
     Parameters
     ----------
+    allowed_dictionary : list
+        Allowed peptides masses based on convolution.
     spectrum : list
         peaks in the spectrum.
 
@@ -26,12 +29,14 @@ def peptide_reconstruction_from_spectrum(spectrum: list):
     A list of variants of cyclic peptide.
 
     """
+    
+    A_total_mass_was_here = False
 
     amino_acid_masses_for_unknown = {}
     for i in range(57,201):
         amino_acid_masses_for_unknown[chr(i)] = i
     
-    candidate_spectrum = [sorted(copy.deepcopy(list(amino_acid_masses_for_unknown.values())))]
+    candidate_spectrum = [sorted(copy.deepcopy(allowed_dictionary))]
     
     for i in range(0,len(candidate_spectrum[0])):
         cur_element_zero_element = candidate_spectrum[0][i]
@@ -56,7 +61,7 @@ def peptide_reconstruction_from_spectrum(spectrum: list):
         
         copy_of_candidate_spectrum = copy.deepcopy(candidate_spectrum[i])
         
-        print("len(candidate_spectrum[",i,"]) beginning = ", len(candidate_spectrum[i]))
+        #print("len(candidate_spectrum[",i,"]) beginning = ", len(candidate_spectrum[i]))
         
         for current_spectrum_element in candidate_spectrum[i]:
             current_total_mass = 0
@@ -66,6 +71,9 @@ def peptide_reconstruction_from_spectrum(spectrum: list):
                 if (current_total_mass not in spectrum):
                     copy_of_candidate_spectrum.remove(current_spectrum_element)
                     break
+                
+        if (current_total_mass == spectrum_max):
+            A_total_mass_was_here = True
 
         candidate_spectrum[i] = copy.deepcopy(copy_of_candidate_spectrum)
         print("len(candidate_spectrum[",i,"]) after cleaning by spectrum comparison = ", len(candidate_spectrum[i]))
@@ -73,7 +81,7 @@ def peptide_reconstruction_from_spectrum(spectrum: list):
         candidate_spectrum[i] = copy.deepcopy(sorted(copy_of_candidate_spectrum))
         
         #if (i < 3):
-        print("candidate_spectrum[",i,"]) after duplicate cleaning = ", candidate_spectrum[i])
+            #print("candidate_spectrum[",i,"]) after duplicate cleaning = ", candidate_spectrum[i])
         print("len(candidate_spectrum[",i,"]) after duplicate cleaning = ", len(candidate_spectrum[i]))
         
         candidate_spectrum.append([])
@@ -93,7 +101,14 @@ def peptide_reconstruction_from_spectrum(spectrum: list):
         print(time.time() - t1)
     
     print("last = ", last)
-    final_variant = sorted(list(candidate_spectrum[last]))    
+    
+    final_variant = sorted(list(candidate_spectrum[last]))
+    
+    if (A_total_mass_was_here == True):
+        final_variant = sorted(list(candidate_spectrum[last]))
+    else:
+        if ((last - 1) >= 1):
+            final_variant = sorted(list(candidate_spectrum[last - 1]))
     
     return final_variant
 
@@ -137,7 +152,7 @@ def trim_peptide_score_table(list_of_peptide_candidates: list, spectrum_input: l
     list_filled = False
     
     # print("len(peptide_score_table) = ", len(peptide_score_table))
-    """
+    
     for i in range(len(peptide_score_table)):
         current_peptide_score = peptide_score_table[i][0]
         if (list_filled == False):
@@ -155,8 +170,6 @@ def trim_peptide_score_table(list_of_peptide_candidates: list, spectrum_input: l
                 break
     
     return list_of_top_peptides[0]
-"""
-    return peptide_score_table[0][1]
 
 
 def spectrum_formation_for_cyclic_peptide_function(cyclic_peptide_string, cyclic_not_linear: bool, mass_representation: bool):
@@ -247,7 +260,7 @@ def spectrum_formation_for_cyclic_peptide_function(cyclic_peptide_string, cyclic
                     current_element_for_mass_determination = current_peptide_variant[j:(j + i)]
     
                     count_repetitive_fragments = (str(current_peptide_variant).replace(")", "").replace("(", "").replace(",", "")).count((str(current_element_for_mass_determination)).replace(")", "").replace("(", "").replace(",", ""))
-                    print("count_repetitive_fragments = ", count_repetitive_fragments)
+                    #print("count_repetitive_fragments = ", count_repetitive_fragments)
     
                     mass_of_current_element = 0
                     for t in range(0,len(current_element_for_mass_determination)):
@@ -255,7 +268,7 @@ def spectrum_formation_for_cyclic_peptide_function(cyclic_peptide_string, cyclic
                                     
                     for repetitive_i in range(0,count_repetitive_fragments):
                         current_repetitive_variant = str(current_element_for_mass_determination) + str(repetitive_i)
-                        print("current_repetitive_variant = ", current_repetitive_variant)
+                        #print("current_repetitive_variant = ", current_repetitive_variant)
     
                         if (current_repetitive_variant not in dictionary_of_masses.keys()):
                             dictionary_of_masses[current_repetitive_variant] = mass_of_current_element
@@ -265,6 +278,7 @@ def spectrum_formation_for_cyclic_peptide_function(cyclic_peptide_string, cyclic
     list_of_masses.extend(list(dictionary_of_masses.values()))
     
     return sorted(list_of_masses)
+
 
 def peptide_score_function(peptide_string, experimental_spectrum_input: list, mass_representation: bool):
     """
@@ -291,21 +305,24 @@ def peptide_score_function(peptide_string, experimental_spectrum_input: list, ma
     
     theoretical_spectrum = sorted(spectrum_formation_for_cyclic_peptide_function(peptide_string,False,True))
     
-    # print("theoretical_spectrum = ", theoretical_spectrum)
+    #print("peptide_string = ", peptide_string)
+    
+    #print("theoretical_spectrum = ", theoretical_spectrum)
     length_of_theoretical_spectrum = len(theoretical_spectrum)
     
     length_of_experimental_spectrum = len(experimental_spectrum_input)
     
-    # print("length_of_theoretical_spectrum = ", length_of_theoretical_spectrum)
-    # print("length_of_experimental_spectrum = ", length_of_experimental_spectrum)
+    #print("length_of_theoretical_spectrum = ", length_of_theoretical_spectrum)
+    #print("length_of_experimental_spectrum = ", length_of_experimental_spectrum)
     
-    # print("experimental_spectrum_input", experimental_spectrum_input)
+    #print("experimental_spectrum_input", experimental_spectrum_input)
     
     already_included = []
     
     for i in range(0,length_of_experimental_spectrum):
         current_experimental_spectrum_element = experimental_spectrum_input[i]
         current_multiplicity = min(theoretical_spectrum.count(current_experimental_spectrum_element),experimental_spectrum_input.count(current_experimental_spectrum_element))
+        #current_multiplicity = experimental_spectrum_input.count(current_experimental_spectrum_element)
         if (current_experimental_spectrum_element in theoretical_spectrum) and (current_experimental_spectrum_element not in already_included):
             # if current_experimental_spectrum_element < 200:
             #     print("current_multiplicity = ", current_multiplicity, "for the element ", current_experimental_spectrum_element)
@@ -315,12 +332,15 @@ def peptide_score_function(peptide_string, experimental_spectrum_input: list, ma
     return peptide_score_value
 
 
-def error_compensation_for_spectrum(current_spectrum_variant: list, max_length_of_list: int, real_spectrum: list):
+def error_compensation_for_spectrum_convolution_based(allowed_dictionary : list, current_spectrum_variant: list, max_length_of_list: int, real_spectrum: list):
     """
     reconstruct cyclic peptide by mass spectrum (ONLY for mass representation)
 
     Parameters
     ----------
+    allowed_dictionary : list
+        Allowed peptides masses based on convolution.
+    
     current_spectrum_variant: list
         A zero variant of the list without phantom peaks guaranted.
     
@@ -344,16 +364,16 @@ def error_compensation_for_spectrum(current_spectrum_variant: list, max_length_o
     
     current_i = len(current_spectrum_variant[0])
     
-    candidate_spectrum = [sorted(copy.deepcopy(list(amino_acid_masses_for_unknown.values())))]
+    candidate_spectrum = [sorted(copy.deepcopy(allowed_dictionary))]
     
-    print("candidate_spectrum before = ", str(candidate_spectrum))
+    #print("candidate_spectrum before = ", str(candidate_spectrum))
     
     for i in range(0,len(candidate_spectrum[0])):
         cur_element_zero_element = candidate_spectrum[0][i]
         # convert the elements of the list into tuples for further using in itertools conversions
         candidate_spectrum[0][i] = (cur_element_zero_element,)
     
-    print("candidate_spectrum after = ", str(candidate_spectrum))
+    #print("candidate_spectrum after = ", str(candidate_spectrum))
     
     for i in range(1,current_i):
         candidate_spectrum.append(current_spectrum_variant)
@@ -392,17 +412,19 @@ def error_compensation_for_spectrum(current_spectrum_variant: list, max_length_o
                     copy_of_candidate_spectrum.remove(current_spectrum_element)
                     break
                 
-            if (current_total_mass == spectrum_max) and (len(top_candidate) == 0):
-                top_candidate = current_spectrum_element
+            if (current_total_mass == spectrum_max):
                 top_candidate_score = peptide_score_function(current_spectrum_element,real_spectrum,True)
-                print("top_candidate_score = ", top_candidate_score)
-                
+                #print("top_candidate_score = ", top_candidate_score)
+                top_candidate.append((top_candidate_score,current_spectrum_element))
+            """    
             if (current_total_mass == spectrum_max) and (len(top_candidate) > 0):
-                current_spectrum_element_score = peptide_score_function(current_spectrum_element,real_spectrum,True)
+                
+                
                 if (current_spectrum_element_score > top_candidate_score):
                     top_candidate = current_spectrum_element
                     top_candidate_score = current_spectrum_element_score
                     print("top_candidate_score updated = ", top_candidate_score)
+            """
                     
         candidate_spectrum[i] = copy.deepcopy(copy_of_candidate_spectrum)
         #print("len(candidate_spectrum[",i,"]) after cleaning by spectrum comparison = ", len(candidate_spectrum[i]))
@@ -411,7 +433,7 @@ def error_compensation_for_spectrum(current_spectrum_variant: list, max_length_o
         candidate_spectrum[i] = copy.deepcopy(sorted(copy_of_candidate_spectrum))
         
         #if (i < 3):
-        print("candidate_spectrum[",i,"]) after duplicate cleaning = ", candidate_spectrum[i])
+            #print("candidate_spectrum[",i,"]) after duplicate cleaning = ", candidate_spectrum[i])
         # else:
         #     return
         #print("len(candidate_spectrum[",i,"]) after duplicate cleaning = ", len(candidate_spectrum[i]))
@@ -438,45 +460,181 @@ def error_compensation_for_spectrum(current_spectrum_variant: list, max_length_o
     
     # final_variant = copy.deepcopy(trim_peptide_score_table(sorted(list(candidate_spectrum[last])),real_spectrum,max_length_of_list))
     
+    top_candidate = copy.deepcopy(sorted(top_candidate,reverse=True))
+    
     return top_candidate
 
 
-read_data_from_file = open("dataset_30246_7.txt", "r")
+def cyclopeptide_reconstruction_by_convolution_matrix(input_spectrum: list, most_frequent_max: int):
+    """
+    
+    Parameters
+    ----------
+    input_spectrum : list
+        An experimental spectrum.
+        
+    most_frequent_max : int
+        A number of most frequent peaks to keep in the spectrum as an input for the peptide reconstruction starting point.
+
+    Returns
+    -------
+    Spectrum of most frequent elements.
+
+    """
+    
+    output_spectrum = []
+    
+    spectrum_with_rating = []
+    
+    full_spectrum = []
+    
+    convolution_matrix = []
+    
+    spectrum_length = len(input_spectrum)
+    # print("spectrum_length = ", spectrum_length)
+    
+    for i in range(0,(spectrum_length - 1)):
+        convolution_matrix.append([])
+        for j in range((i + 1),spectrum_length):
+            convolution_matrix[i].append((input_spectrum[j] - input_spectrum[i]))
+    
+    # print("convolution_matrix = ", convolution_matrix)
+    
+    for i in range(0,(spectrum_length - 1)):
+        for j in range(0,(spectrum_length - i - 1)):
+            # print("i = ", i, "j = ", j)
+            current_convolution_matrix_element = convolution_matrix[i][j]
+            # print("current_convolution_matrix_element[", i," , ", j, "] = ", current_convolution_matrix_element)
+            if ((current_convolution_matrix_element >= 57) and (current_convolution_matrix_element <= 200)):
+                full_spectrum.append(current_convolution_matrix_element)
+    
+    full_spectrum_as_a_string = str(full_spectrum)
+    for i in range(0, len(full_spectrum)):
+        current_sp_element = full_spectrum[i]
+        if (current_sp_element not in output_spectrum):
+            output_spectrum.append(current_sp_element)
+            counts_of_sp_element_in_full_spectrum = full_spectrum_as_a_string.count(str(current_sp_element))
+            spectrum_with_rating.append((counts_of_sp_element_in_full_spectrum,current_sp_element))
+        
+    spectrum_with_rating = sorted(spectrum_with_rating,reverse=True)
+    
+    #print("spectrum_with_rating = ", spectrum_with_rating)
+    
+    output_spectrum = []
+    spectrum_filled = False
+    length_spectrum_with_rating = len(spectrum_with_rating)
+    count_of_elements = 0
+    while (spectrum_filled == False):
+        count_of_elements += 1
+        if (count_of_elements <= length_spectrum_with_rating):
+            if (count_of_elements <= most_frequent_max):
+                output_spectrum.append(spectrum_with_rating[count_of_elements - 1][1])
+            else:
+                if (spectrum_with_rating[count_of_elements - 2][0] > spectrum_with_rating[count_of_elements - 1][1]):
+                    spectrum_filled = True
+                else:
+                     output_spectrum.append(spectrum_with_rating[count_of_elements - 1][1])   
+        else:
+            spectrum_filled = True
+            break
+    
+    output_spectrum = copy.deepcopy(sorted(output_spectrum,reverse=False))
+    
+    #print("output_spectrum = ", output_spectrum)
+    
+    return output_spectrum
+
+
+def combined_convolution_spectrum_reconstruction_function(most_frequent_max: int, N_Cut: int, real_spectrum: list):
+    """
+    Using spectrum comvolution with Leaderboard cyclic peptide reconstruction to get the Top peptide candidate for the spectrum.
+
+    Parameters
+    ----------
+    most_frequent_max : int
+        A number of most frequent peaks to keep in the spectrum as an input for the peptide reconstruction starting point.
+    N_Cut : int
+        A number of Leaderbord peptides to keep in the peptide reconstruction.
+    real_spectrum : list
+        A real corrupted spectrum.
+
+    Returns
+    -------
+    Top candidate peptide in the mass-representation.
+
+    """
+    
+    top_peptide = ""
+    
+    reconstructed_variants_from_spectrum = cyclopeptide_reconstruction_by_convolution_matrix(real_spectrum,most_frequent_max)
+    
+    modified_spectrum_with_refreshed_singlets_part = copy.deepcopy(real_spectrum)
+    for i in range(0, len(reconstructed_variants_from_spectrum)):
+        current_spect_el = reconstructed_variants_from_spectrum[i]
+        if (current_spect_el not in modified_spectrum_with_refreshed_singlets_part):
+            modified_spectrum_with_refreshed_singlets_part.append(current_spect_el)
+        
+    modified_spectrum_with_refreshed_singlets_part = copy.deepcopy(sorted(modified_spectrum_with_refreshed_singlets_part))
+    
+    # print("modified_spectrum_with_refreshed_singlets_part = ", modified_spectrum_with_refreshed_singlets_part)
+    
+    top_peptide_candidates = peptide_reconstruction_from_spectrum(reconstructed_variants_from_spectrum,real_spectrum)
+    
+    # print("top_peptide_candidates = ", top_peptide_candidates)
+    
+    top_peptide = error_compensation_for_spectrum_convolution_based(reconstructed_variants_from_spectrum, top_peptide_candidates, N_Cut, real_spectrum)
+    
+    output_top = []
+    output_score_max = top_peptide[0][0]
+    cur_score = top_peptide[0][0]
+    i_count = 0
+    while ((cur_score == output_score_max) and (i_count < len(top_peptide))):
+
+        output_top.append(top_peptide[i_count])
+        
+        i_count += 1
+        
+        cur_score = top_peptide[i_count][0]
+    
+    #print("top_peptide = ", top_peptide)
+    
+    #print("top_peptide[0][1] = ", top_peptide[0][1])
+    
+    print("output_top = ", output_top)
+    
+    return output_top
+
+read_data_from_file = open("input_2.txt", "r")
 
 read_strings_from_file = read_data_from_file.readlines()
 
-N_CUT_INPUT = int(str(read_strings_from_file[0]).strip())
+M_MAX_INPUT = int(str(read_strings_from_file[0]).strip())
 
-spectrum_list = str(read_strings_from_file[1]).split()
+N_CUT_INPUT = int(str(read_strings_from_file[1]).strip())
+
+spectrum_list = str(read_strings_from_file[2]).split()
 
 for m in range(0,len(spectrum_list)):
     spectrum_list[m] = int(str(spectrum_list[m]).strip())
-spectrum_list.remove(0)
+#spectrum_list.append(0)
+
+spectrum_list = copy.deepcopy(sorted(spectrum_list))
 
 #print("spectrum_list = ", spectrum_list)
 
-peptide_variants_output = peptide_reconstruction_from_spectrum(spectrum_list)
+top_candidate = combined_convolution_spectrum_reconstruction_function(M_MAX_INPUT, N_CUT_INPUT, spectrum_list)
 
-print("peptide_variants_output = ", peptide_variants_output)
+output_file = open("output_top_candidate.txt", "w")
 
-print("len(peptide_variants_output) = ", len(peptide_variants_output))
+for cur_top_candidate in top_candidate:
+    
+    cur_top_candidate_score = cur_top_candidate[0]
+    
+    output_file.write(str(cur_top_candidate_score) + "\n")
 
-
-cyclic_peptide_top = trim_peptide_score_table(peptide_variants_output, spectrum_list, N_CUT_INPUT)
-
-cyclic_peptide_top = str(cyclic_peptide_top).replace(", ","-").replace("(","").replace(")", "")
-
-print("cyclic_peptide_top after = ", cyclic_peptide_top)
-
-testing_full_spectrum_result = error_compensation_for_spectrum(peptide_variants_output, N_CUT_INPUT, spectrum_list)
-
-print("testing_full_spectrum_result = ", testing_full_spectrum_result)
-
-testing_full_spectrum_result = str(testing_full_spectrum_result).replace(", ","-").replace("(","").replace(")", "")
-
-output_file = open("output_cyclic_peptide_top.txt", "w")
-
-output_file.write(str(testing_full_spectrum_result).replace("\"", "").replace("\'","").replace("\"", "").replace("\'","").replace(",","").replace("[", "").replace("]", ""))
+    cur_top_candidate_peptide = str(cur_top_candidate[1]).replace(", ","-").replace("(","").replace(")", "")
+    
+    output_file.write(str(cur_top_candidate_peptide).replace("\"", "").replace("\'","").replace("\"", "").replace("\'","").replace(",","").replace("[", "").replace("]", "") + "\n")
 
 output_file.close()
 
