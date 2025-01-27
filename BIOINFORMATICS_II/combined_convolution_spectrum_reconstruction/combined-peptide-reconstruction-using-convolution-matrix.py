@@ -518,7 +518,7 @@ def cyclopeptide_reconstruction_by_convolution_matrix(input_spectrum: list, most
         
     spectrum_with_rating = sorted(spectrum_with_rating,reverse=True)
     
-    #print("spectrum_with_rating = ", spectrum_with_rating)
+    print("spectrum_with_rating = ", spectrum_with_rating)
     
     output_spectrum = []
     spectrum_filled = False
@@ -604,7 +604,7 @@ def combined_convolution_spectrum_reconstruction_function(most_frequent_max: int
     
     return top_peptide
 
-read_data_from_file = open("dataset_30246_8.txt", "r")
+read_data_from_file = open("test_input_1.txt", "r")
 
 read_strings_from_file = read_data_from_file.readlines()
 

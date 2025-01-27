@@ -154,7 +154,7 @@ def peptide_score_function(peptide_string: str, experimental_spectrum_input: lis
                 
     return peptide_score_value
 
-read_data_from_file = open("dataset_30249_1.txt", "r")
+read_data_from_file = open("test_input_1.txt", "r")
 
 read_strings_from_file = read_data_from_file.readlines()
 
